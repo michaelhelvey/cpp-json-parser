@@ -1,0 +1,9 @@
+.ccls-cache
+build
+bin
+*.cmake
+*.o
+CMakeCache.txt
+CMakeFiles
+compile_commands.json
+.cache
