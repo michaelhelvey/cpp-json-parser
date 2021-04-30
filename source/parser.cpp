@@ -1,8 +1,8 @@
-#include <iostream>
 #include "parser.hpp"
 #include "fmt/format.h"
 #include "lexer.hpp"
 #include "utility.hpp"
+#include <iostream>
 
 class parse_exception : std::exception {
 public:
@@ -72,17 +72,27 @@ std::unique_ptr<json_value> JSONParser::parse_number()
 	}
 }
 
-std::unique_ptr<json_value> JSONParser::parse_string() {
-	return std::make_unique<json_value>(json_type_t::STRING, m_lookahead->lexeme);
+std::unique_ptr<json_value> JSONParser::parse_string()
+{
+	return std::make_unique<json_value>(
+		json_type_t::STRING, m_lookahead->lexeme);
 }
 
-std::unique_ptr<json_value> JSONParser::parse_array() {
+std::unique_ptr<json_value> JSONParser::parse_array()
+{
 	auto resulting_array = json_array();
 	match(Token::Type::ARRAY_OPEN);
+	if (m_lookahead->type == Token::Type::ARRAY_CLOSE) {
+		// fail fast, we have an empty array
+		match(Token::Type::ARRAY_CLOSE);
+		return std::make_unique<json_value>(
+			json_type_t::ARRAY, std::move(resulting_array));
+	}
 	parse_value(resulting_array);
 	parse_rest_array_members(resulting_array);
 	match(Token::Type::ARRAY_CLOSE);
-	return std::make_unique<json_value>(json_type_t::ARRAY, std::move(resulting_array));
+	return std::make_unique<json_value>(
+		json_type_t::ARRAY, std::move(resulting_array));
 }
 
 void JSONParser::parse_rest_array_members(json_array& parent)
@@ -94,13 +104,21 @@ void JSONParser::parse_rest_array_members(json_array& parent)
 	}
 }
 
-std::unique_ptr<json_value> JSONParser::parse_object() {
+std::unique_ptr<json_value> JSONParser::parse_object()
+{
 	auto resulting_object = json_object();
 	match(Token::Type::OBJECT_OPEN);
+	if (m_lookahead->type == Token::Type::OBJECT_CLOSE) {
+		// fail fast, we have an empty object
+		match(Token::Type::OBJECT_CLOSE);
+		return std::make_unique<json_value>(
+			json_type_t::OBJECT, std::move(resulting_object));
+	}
 	parse_single_object_member(resulting_object);
 	parse_rest_object_members(resulting_object);
 	match(Token::Type::OBJECT_CLOSE);
-	return std::make_unique<json_value>(json_type_t::OBJECT, std::move(resulting_object));
+	return std::make_unique<json_value>(
+		json_type_t::OBJECT, std::move(resulting_object));
 }
 
 void JSONParser::parse_single_object_member(json_object& parent)
@@ -114,7 +132,7 @@ void JSONParser::parse_single_object_member(json_object& parent)
 
 void JSONParser::parse_rest_object_members(json_object& parent)
 {
-	if(m_lookahead->type == Token::Type::COMMA) {
+	if (m_lookahead->type == Token::Type::COMMA) {
 		match(Token::Type::COMMA);
 		parse_single_object_member(parent);
 		parse_rest_object_members(parent);

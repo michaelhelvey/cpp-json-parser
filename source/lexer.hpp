@@ -26,7 +26,7 @@ struct Token {
 	// optional advice to the parser from the lexer about the token
 	TokenAdvice advice {};
 
-	std::string repr();
+	[[nodiscard]] std::string repr() const;
 };
 
 const char *token_type_repr(Token::Type type);

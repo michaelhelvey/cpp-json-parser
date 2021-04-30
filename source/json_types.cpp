@@ -1,7 +1,6 @@
 #include "json_types.hpp"
 #include "fmt/format.h"
 #include "utility.hpp"
-#include <sstream>
 #include <string>
 #include <utility>
 
@@ -40,15 +39,14 @@ void json_object::add_member(json_key_value_pair new_member)
 
 std::string json_object::repr() const
 {
-	std::stringstream result;
-	result << "{ ";
+	std::string result{"{ "};
 	for (size_t i = 0; i < m_members.size(); i++) {
-		result << m_members.at(i).repr();
-		if (i != m_members.size() - 1) { result << ", "; };
+		result += m_members.at(i).repr();
+		if (i != m_members.size() - 1) { result += ", "; };
 	}
-	result << " }";
+	result += " }";
 
-	return result.str();
+	return result;
 }
 
 const std::vector<json_key_value_pair>& json_object::members() const
@@ -134,15 +132,15 @@ void json_value::add_value_to_array(std::unique_ptr<json_value> value) const
 
 std::string json_array_repr(json_array& array)
 {
-	std::stringstream result;
-	result << "[";
+	std::string result;
+	result += "[";
 	for (size_t i = 0; i < array.size(); i++) {
-		result << array.at(i)->repr();
-		if (i != array.size() - 1) { result << ","; };
+		result += array.at(i)->repr();
+		if (i != array.size() - 1) { result += ","; };
 	}
-	result << "]";
+	result += "]";
 
-	return result.str();
+	return result;
 }
 
 std::string json_value::repr() const

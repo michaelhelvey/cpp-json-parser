@@ -13,6 +13,7 @@
 
 int main()
 {
+	std::ios_base::sync_with_stdio(false);
 	std::ifstream json_file{"bench/canada.json"};
 	if (!json_file) {
 		std::cout << "I/O Error: Could not open ./bench/canada.json" << "\n";

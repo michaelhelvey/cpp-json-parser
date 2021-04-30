@@ -21,7 +21,7 @@ common_flags = -Wall -Wpedantic -std=c++17
 ifeq ($(MODE), debug)
 	CFLAGS = -g -D_GLIBCXX_DEBUG=1
 else
-	CFLAGS = -O3
+	CFLAGS = -Ofast
 endif
 
 CFLAGS += $(common_flags)
