@@ -1,5 +1,5 @@
 MODE				?= debug
-CC					= g++
+CC					= clang++
 SRC					= $(wildcard source/*.cpp)
 BUILD_DIR		= build
 SOURCE_DIR 	= source
@@ -13,11 +13,13 @@ endif
 INCLUDE_DIRS += $(CONAN_INCLUDE_DIRS)
 LIB_DIRS += $(CONAN_LIB_DIRS)
 LDLIBS += $(CONAN_LIBS)
-DEPS_FLAGS = $(INCLUDE_DIRS:%=-I%) $(LIB_DIRS:%=-L%) $(LDLIBS:%=-l%)
+
+INCLUDE_FLAGS = $(INCLUDE_DIRS:%=-I%) 
+LINKER_FLAGS = $(INCLUDE_FLAGS) $(LIB_DIRS:%=-L%) $(LDLIBS:%=-l%)
 
 common_flags = -Wall -Wpedantic -std=c++17
 ifeq ($(MODE), debug)
-	CFLAGS = -g 
+	CFLAGS = -g -D_GLIBCXX_DEBUG=1
 else
 	CFLAGS = -O3
 endif
@@ -28,12 +30,12 @@ OBJS = $(SRC:$(SOURCE_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 
 $(EXE): $(OBJS)
 	@mkdir -p $(dir $(EXE))
-	$(CC) $(CFLAGS) -o $(EXE) $? $(DEPS_FLAGS)
+	$(CC) $(CFLAGS) -o $(EXE) $? $(LINKER_FLAGS)
 
 $(OBJS): $(SRC)
 	@./scripts/check_deps.sh $(DEPS_FILE)
 	@mkdir -p $(dir $(EXE))
-	$(CC) $(CFLAGS) -c$(patsubst $(BUILD_DIR)/%.cpp, $(SOURCE_DIR)/%.cpp, $*.cpp) -o $*.o $(DEPS_FLAGS)
+	$(CC) $(CFLAGS) -c$(patsubst $(BUILD_DIR)/%.cpp, $(SOURCE_DIR)/%.cpp, $*.cpp) -o $*.o $(INCLUDE_FLAGS)
 
 .PHONY: install
 install:
@@ -51,7 +53,7 @@ debug:
 
 .PHONY: clean
 clean:
-	rm -rf $(BUILD_DIR)/.*o
+	rm -rf $(BUILD_DIR)/*.o
 	rm -rf $(BUILD_DIR)/debug/*
 	rm -rf $(BUILD_DIR)/release/*
 

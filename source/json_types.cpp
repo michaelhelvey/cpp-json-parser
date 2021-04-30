@@ -7,31 +7,11 @@
 
 /* JSON Number Definitions */
 
-class parse_exception : std::exception {
-public:
-	explicit parse_exception(std::string m)
-		: m_msg(std::move(m)) {};
-	[[nodiscard]] const char* what() const noexcept override
-	{
-		return m_msg.c_str();
-	}
-
-private:
-	std::string m_msg;
-};
-
 constexpr int json_number::as_int() const { return std::get<int>(m_value); }
 
 constexpr double json_number::as_double() const
 {
 	return std::get<double>(m_value);
-}
-
-constexpr json_number& json_number::operator=(const json_number& other)
-{
-	m_value = other.m_value;
-	m_type = other.m_type;
-	return *this;
 }
 
 std::string json_number::repr() const
@@ -53,12 +33,20 @@ json_object::json_object()
 {
 }
 
+void json_object::add_member(json_key_value_pair new_member)
+{
+	m_members.push_back(std::move(new_member));
+}
+
 std::string json_object::repr() const
 {
-	std::stringstream result("{ ");
-	for (auto& el : m_members) {
-		result << el.repr() << ", ";
+	std::stringstream result;
+	result << "{ ";
+	for (size_t i = 0; i < m_members.size(); i++) {
+		result << m_members.at(i).repr();
+		if (i != m_members.size() - 1) { result << ", "; };
 	}
+	result << " }";
 
 	return result.str();
 }
@@ -72,7 +60,34 @@ const std::vector<json_key_value_pair>& json_object::members() const
 
 std::string json_key_value_pair::repr() const
 {
-	return fmt::format("\"{}\": {}", key, value->repr());
+	return fmt::format("\"{}\": {}", m_key, m_value->repr());
+}
+
+json_key_value_pair::json_key_value_pair(
+	std::string message, std::unique_ptr<json_value> value)
+	: m_key(std::move(message))
+	, m_value(std::move(value))
+{
+}
+
+json_key_value_pair::json_key_value_pair(std::string message)
+	: m_key(std::move(message))
+	, m_value(std::make_unique<json_value>(json_type_t::NULLPTR, nullptr))
+{
+}
+
+void json_key_value_pair::set_value(std::unique_ptr<json_value> json_value)
+{
+	m_value = std::move(json_value);
+}
+
+const std::string& json_key_value_pair::key() const { return m_key; }
+json_value* json_key_value_pair::value() const { return m_value.get(); }
+
+std::unique_ptr<json_value> json_key_value_pair::release_value()
+{
+	auto released_value_ptr = m_value.release();
+	return std::unique_ptr<json_value>(released_value_ptr);
 }
 
 /* JSON Value Definitions */
@@ -92,7 +107,10 @@ std::string json_value::as_string() const
 	return std::get<std::string>(m_value);
 }
 
-std::nullptr_t json_value::as_null() { return nullptr; }
+std::nullptr_t json_value::as_null()
+{
+	return std::get<std::nullptr_t>(m_value);
+}
 
 json_array& json_value::as_array() const
 {
@@ -116,10 +134,13 @@ void json_value::add_value_to_array(std::unique_ptr<json_value> value) const
 
 std::string json_array_repr(json_array& array)
 {
-	std::stringstream result("[ ");
-	for (auto& el : array) {
-		result << el->repr();
+	std::stringstream result;
+	result << "[";
+	for (size_t i = 0; i < array.size(); i++) {
+		result << array.at(i)->repr();
+		if (i != array.size() - 1) { result << ","; };
 	}
+	result << "]";
 
 	return result.str();
 }
