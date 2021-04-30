@@ -1,3 +1,4 @@
+#include <cassert>
 #include <optional>
 #include <array>
 #include <algorithm>
